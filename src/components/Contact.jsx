@@ -10,6 +10,11 @@ const makeCaptcha = () => {
   return { a, b, answer: a + b };
 };
 
+const isConfigured = (value) =>
+  typeof value === "string" &&
+  value.trim().length > 0 &&
+  !value.includes("your_");
+
 const Contact = ({ resumeUrl }) => {
   const [form, setForm] = useState({
     name: "",
@@ -48,6 +53,10 @@ const Contact = ({ resumeUrl }) => {
       nextErrors.message = "Message is required.";
     }
 
+    if (!form.subject.trim()) {
+      nextErrors.subject = "Subject is required.";
+    }
+
     if (Number(form.captcha) !== captcha.answer) {
       nextErrors.captcha = "Captcha answer is incorrect.";
     }
@@ -75,29 +84,27 @@ const Contact = ({ resumeUrl }) => {
     setIsSubmitting(true);
 
     try {
-      const emailConfigReady =
-        env.serviceId &&
-        env.templateId &&
-        env.publicKey &&
-        !env.serviceId.includes("your_") &&
-        !env.templateId.includes("your_") &&
-        !env.publicKey.includes("your_");
+      const emailConfigReady = [
+        env.serviceId,
+        env.templateId,
+        env.publicKey,
+      ].every(isConfigured);
 
-      if (emailConfigReady) {
-        await emailjs.send(
-          env.serviceId,
-          env.templateId,
-          {
-            from_name: form.name,
-            reply_to: form.email,
-            subject: form.subject || "Portfolio Contact",
-            message: form.message,
-          },
-          { publicKey: env.publicKey },
-        );
-      } else {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!emailConfigReady) {
+        throw new Error("EmailJS configuration is missing.");
       }
+
+      await emailjs.send(
+        env.serviceId,
+        env.templateId,
+        {
+          from_name: form.name.trim(),
+          reply_to: form.email.trim(),
+          subject: form.subject.trim(),
+          message: form.message.trim(),
+        },
+        { publicKey: env.publicKey },
+      );
 
       setFeedback({
         type: "success",
@@ -105,9 +112,10 @@ const Contact = ({ resumeUrl }) => {
       });
       resetForm();
     } catch (error) {
+      console.error("Contact form submission failed:", error);
       setFeedback({
         type: "error",
-        text: "Oops! Please try again or email me directly.",
+        text: "Email service is not configured or failed. Please email me directly at varadpendkar@gmail.com.",
       });
     } finally {
       setIsSubmitting(false);
@@ -173,7 +181,9 @@ const Contact = ({ resumeUrl }) => {
               name="subject"
               value={form.subject}
               onChange={onChange}
+              required
             />
+            {errors.subject && <small>{errors.subject}</small>}
           </label>
 
           <label>
