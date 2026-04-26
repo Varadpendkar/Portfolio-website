@@ -26,7 +26,7 @@ const SECTION_IDS = [
 const App = () => {
   const [activeSection, setActiveSection] = useState("hero");
   const [projectFilter, setProjectFilter] = useState("All");
-  const resumeUrl = "/resume/Varad_Pendkar_Resume.pdf";
+  const resumeUrl = "/resume/Varad_Pendkar_Resume.docx";
 
   useEffect(() => {
     const observer = new IntersectionObserver(

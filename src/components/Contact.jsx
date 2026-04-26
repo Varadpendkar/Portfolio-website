@@ -227,7 +227,7 @@ const Contact = ({ resumeUrl }) => {
             href={resumeUrl}
             download
           >
-            📄 Download Full Resume PDF
+            📄 Download Full Resume
           </a>
         </form>
       </motion.div>
